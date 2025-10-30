@@ -2,6 +2,8 @@
 
 A minimal PyTorch + Flask web app for question answering using a simple RNN, trained on a small QA dataset.
 
+<img width="1050" height="360" alt="Screenshot 2025-10-30 132003" src="https://github.com/user-attachments/assets/45649e50-2d01-4bbf-bf75-97867552aa09" />
+
 ## Features
 - Answer questions using an RNN trained on your own dataset (CSV)
 - Very simple, clean white-page frontend
