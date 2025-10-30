@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RNN based Question Answering System</title>
+    <style>
+        body { 
+            background: #fff; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+        }
+        #qa-form {
+            display: flex; flex-direction: column; align-items: center;
+        }
+        input, button { margin: 5px; font-size: 18px; }
+        #answer { margin-top: 30px; font-size: 22px; color: #111; }
+    </style>
+</head>
+<body>
+    <h1>RNN based Question Answering System</h1>
+    <form id="qa-form">
+        <input type="text" id="question" placeholder="Ask a question..." required style="width:320px;" autofocus>
+        <button type="submit">Get Answer</button>
+    </form>
+    <div id="answer"></div>
+    <script>
+        const form = document.getElementById('qa-form');
+        const answerDiv = document.getElementById('answer');
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            answerDiv.innerHTML = '<em>Waiting...</em>';
+            const question = document.getElementById('question').value;
+            const resp = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'question=' + encodeURIComponent(question)
+            });
+            const result = await resp.json();
+            answerDiv.innerHTML = '<strong>Answer:</strong> ' + result.answer;
+        };
+    </script>
+</body>
+</html>
