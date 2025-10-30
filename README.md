@@ -6,7 +6,6 @@ A minimal PyTorch + Flask web app for question answering using a simple RNN, tra
 
 ## Features
 - Answer questions using an RNN trained on your own dataset (CSV)
-- Very simple, clean white-page frontend
 - Works locally in your browser
 
 ## Project Structure
