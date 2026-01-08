@@ -2,45 +2,290 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RNN based Question Answering System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic QA - Advanced BERT System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background: #fff; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #22d3ee;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
         }
-        #qa-form {
-            display: flex; flex-direction: column; align-items: center;
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
         }
-        input, button { margin: 5px; font-size: 18px; }
-        #answer { margin-top: 30px; font-size: 22px; color: #111; }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            z-index: 1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 18px 24px;
+            padding-right: 120px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        button {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            bottom: 8px;
+            padding: 0 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-area {
+            margin-top: 32px;
+            display: none;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .answer-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .answer-text {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 24px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .confidence-box {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .confidence-bar-bg {
+            flex-grow: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .confidence-text {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .loader {
+            display: none;
+            margin: 20px auto;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
     </style>
 </head>
 <body>
-    <h1>RNN based Question Answering System</h1>
-    <form id="qa-form">
-        <input type="text" id="question" placeholder="Ask a question..." required style="width:320px;" autofocus>
-        <button type="submit">Get Answer</button>
-    </form>
-    <div id="answer"></div>
+    <div class="container">
+        <header class="header">
+            <span class="badge">Experimental Python 3.12 + BERT</span>
+            <h1>Knowledge Base</h1>
+            <p>Powered by Semantic Search Embeddings</p>
+        </header>
+
+        <div class="card">
+            <form id="qa-form">
+                <div class="input-group">
+                    <input type="text" id="question" placeholder="Ask anything about the dataset..." required autocomplete="off">
+                    <button type="submit">Ask AI</button>
+                </div>
+            </form>
+
+            <div class="loader" id="loader"></div>
+
+            <div class="result-area" id="result-area">
+                <div class="answer-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Expert Answer
+                </div>
+                <div class="answer-text" id="answer-text"></div>
+                
+                <div class="confidence-box">
+                    <div class="confidence-bar-bg">
+                        <div class="confidence-bar-fill" id="confidence-bar"></div>
+                    </div>
+                    <div class="confidence-text" id="confidence-text">Match: 0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const form = document.getElementById('qa-form');
-        const answerDiv = document.getElementById('answer');
+        const resultArea = document.getElementById('result-area');
+        const answerText = document.getElementById('answer-text');
+        const confidenceBar = document.getElementById('confidence-bar');
+        const confidenceText = document.getElementById('confidence-text');
+        const loader = document.getElementById('loader');
+
         form.onsubmit = async function(e) {
             e.preventDefault();
-            answerDiv.innerHTML = '<em>Waiting...</em>';
+            
             const question = document.getElementById('question').value;
-            const resp = await fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'question=' + encodeURIComponent(question)
-            });
-            const result = await resp.json();
-            answerDiv.innerHTML = '<strong>Answer:</strong> ' + result.answer;
+            if (!question.trim()) return;
+
+            // UI State
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+            confidenceBar.style.width = '0%';
+
+            try {
+                const resp = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'question=' + encodeURIComponent(question)
+                });
+                
+                const result = await resp.json();
+                
+                // Show result
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    resultArea.style.display = 'block';
+                    answerText.innerText = result.answer;
+                    
+                    const score = Math.round(result.confidence * 100);
+                    confidenceBar.style.width = score + '%';
+                    confidenceText.innerText = 'Confidence: ' + score + '%';
+                }, 400);
+
+            } catch (err) {
+                loader.style.display = 'none';
+                alert('Something went wrong. Please check if the server is running.');
+            }
         };
     </script>
 </body>
