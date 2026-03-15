@@ -1,7 +1,7 @@
 @echo off
 echo Starting Semantic QA System...
 echo ============================
-echo Using Python 3.12 (Stable)
+echo Using Python (py launcher)
 echo ============================
-py -3.12 app.py
+py -3.11 app.py
 pause
